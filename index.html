@@ -83,9 +83,11 @@ box-shadow:0 10px 30px rgba(75,90,53,.25);font-size:.85rem;max-width:90vw;text-a
 .st b{display:block;font-size:1.5rem;font-weight:600;color:var(--cara-d);margin-top:4px;word-break:break-all}.st span{font-size:.68rem;letter-spacing:.1em;opacity:.65}
 .bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
 .bar input,.bar select{font:inherit;font-size:.88rem;padding:10px 14px;border-radius:12px;border:1px solid rgba(196,151,95,.35);background:#fff;color:var(--ink);flex:1 1 140px;min-width:0}
-.item{display:grid;grid-template-columns:1fr auto;gap:6px 12px;background:#fff;border-radius:16px;padding:14px;margin-bottom:8px;cursor:pointer;box-shadow:0 3px 12px rgba(120,90,50,.07);transition:transform .2s}
+.item{display:grid;grid-template-columns:110px 1fr auto;gap:6px 12px;align-items:center;background:#fff;border-radius:16px;padding:14px;margin-bottom:8px;cursor:pointer;box-shadow:0 3px 12px rgba(120,90,50,.07);transition:transform .2s}
 .item:hover{transform:translateY(-2px)}.item small{opacity:.6;font-size:.74rem;word-break:break-all}.item .pc{font-weight:600;color:var(--cara-d);text-align:right}
 .tag{display:inline-block;font-size:.7rem;font-weight:600;padding:3px 9px;border-radius:99px;margin-right:4px;background:#e8f0e0;color:#5c6b42}.tag.n{background:#f0e2cc;color:#9a7040}.tag.m{background:#e2eef8;color:#5f86a6}
+.thumb{grid-row:span 2;width:110px;height:58px;border-radius:10px;background:#fffdf8;box-shadow:inset 0 0 0 1px rgba(196,151,95,.3);display:flex;align-items:center;justify-content:center;font-size:.65rem;opacity:.95;text-align:center;overflow:hidden}
+.thumb img{max-width:100%;max-height:100%}.thumb span{opacity:.5}
 #detail{position:fixed;inset:0;z-index:110;background:rgba(75,90,53,.45);display:none;padding:16px;overflow:auto}#detail.open{display:flex}
 .dc{margin:auto;width:min(100%,520px);background:#fffdf8;border-radius:24px;padding:24px;display:flex;flex-direction:column;gap:12px}
 .dc dl{display:grid;grid-template-columns:auto 1fr;gap:8px 14px;font-size:.88rem}.dc dt{opacity:.6}.dc dd{word-break:break-all}
@@ -569,6 +571,7 @@ function countTo(el, from, to, ms) {
 
 /* ===================================================== ADMIN PANEL ===================================================== */
 let rows = [];
+const okSig = v => typeof v === "string" && v.startsWith("data:image/png;base64,");
 const NP = "Not provided", has = v => v !== undefined && v !== null && v !== "";
 const yn = v => v === "yes" ? ["YES", ""] : v === "no" ? ["NO", "n"] : [NP, "m"];
 const when = v => typeof v === "number" ? new Date(v).toLocaleString() : NP;
@@ -585,19 +588,19 @@ function renderAdmin() {
   const n = rows.length, done = rows.filter(r => r.completed).length, c = f => rows.filter(f).length;
   const pcs = rows.map(r => r.lovePercentage).filter(x => typeof x === "number"), avg = pcs.length ? Math.round(pcs.reduce((a, b) => a + b, 0) / pcs.length) : null;
   const S = [["TOTAL", n], ["COMPLETED", done], ["LIST · YES", c(r => r.permanentListAnswer === "yes")], ["LIST · NO", c(r => r.permanentListAnswer === "no")],
-    ["LOVE · YES", c(r => r.loveAnswer === "yes")], ["LOVE · NO", c(r => r.loveAnswer === "no")], ["AVERAGE LOVE", avg === null ? NP : fmt(avg)], ["HIGHEST LOVE", pcs.length ? fmt(Math.max(...pcs)) : NP]];
+    ["SIGNATURES", c(r => okSig(r.signature))], ["LOVE · YES", c(r => r.loveAnswer === "yes")], ["LOVE · NO", c(r => r.loveAnswer === "no")], ["AVERAGE LOVE", avg === null ? NP : fmt(avg)], ["HIGHEST LOVE", pcs.length ? fmt(Math.max(...pcs)) : NP]];
   $("#stats").innerHTML = S.map(([l, v]) => `<div class="st"><span>${l}</span><b>${esc(v)}</b></div>`).join("");
   const q = $("#q").value.trim().toLowerCase(), f = $("#flt").value;
   let L = rows.filter(r => ({ all: 1, lyes: r.loveAnswer === "yes", lno: r.loveAnswer === "no", pyes: r.permanentListAnswer === "yes", pno: r.permanentListAnswer === "no" })[f]);
   if (q) L = L.filter(r => [r.sessionId || r.id, r.permanentListAnswer, r.loveAnswer, r.lovePercentage, when(r.createdAt)].join(" ").toLowerCase().includes(q));
   L.sort($("#sort").value === "pct" ? (a, b) => (b.lovePercentage || 0) - (a.lovePercentage || 0) : (a, b) => (b.createdAt || 0) - (a.createdAt || 0));
   $("#list").innerHTML = L.length ? L.map(r => { const a = yn(r.permanentListAnswer), b = yn(r.loveAnswer);
-    return `<div class="item" data-id="${esc(r.id)}"><div><span class="tag ${a[1]}">List: ${a[0]}</span><span class="tag ${b[1]}">Love: ${b[0]}</span><span class="tag ${r.completed ? "" : "m"}">${r.completed ? "Completed" : "In progress"}</span></div>
+    return `<div class="item" data-id="${esc(r.id)}"><div class="thumb">${okSig(r.signature) ? `<img alt="Signature" src="${r.signature}">` : "<span>No signature</span>"}</div><div><span class="tag ${a[1]}">List: ${a[0]}</span><span class="tag ${b[1]}">Love: ${b[0]}</span><span class="tag ${r.completed ? "" : "m"}">${r.completed ? "Completed" : "In progress"}</span></div>
     <div class="pc">${has(r.lovePercentage) ? fmt(r.lovePercentage) : NP}</div><small>${esc(when(r.createdAt))}</small><small style="text-align:right">${esc((r.sessionId || r.id).slice(0, 8))}</small></div>`; }).join("") : `<p class="note">No responses match.</p>`;
 }
 $("#list").addEventListener("click", e => {
   const it = e.target.closest(".item"); if (!it) return; const r = rows.find(x => x.id === it.dataset.id); if (!r) return;
-  const sig = typeof r.signature === "string" && r.signature.startsWith("data:image/png;base64,") ? `<img alt="Signature" src="${r.signature}">` : `<p class="note">Signature: ${NP}</p>`;
+  const sig = okSig(r.signature) ? `<img alt="Signature" src="${r.signature}"><a class="btn sec" download="signature-${esc((r.sessionId || r.id).slice(0, 8))}.png" href="${r.signature}" style="text-decoration:none;text-align:center">Download signature</a>` : `<p class="note">Signature: ${NP}</p>`;
   $("#dc").innerHTML = `<h2 style="font-size:1.2rem">Response details</h2>${sig}<dl>
     <dt>Permanent list</dt><dd>${yn(r.permanentListAnswer)[0]}</dd><dt>Do you love me?</dt><dd>${yn(r.loveAnswer)[0]}</dd>
     <dt>Love percentage</dt><dd>${has(r.lovePercentage) ? fmt(r.lovePercentage) : NP}</dd><dt>Completed</dt><dd>${r.completed === true ? "Yes" : r.completed === false ? "No" : NP}</dd>

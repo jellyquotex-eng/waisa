@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#faf6ef">
+<title>For You</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+Bengali:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ===== TOKENS ===== */
+:root{--off:#faf6ef;--cara:#c4975f;--cara-d:#9a7040;--blue:#cfe3f3;--blue-d:#8fb6d6;--olive:#8a9a6b;--ink:#4a3d2f;--glass:rgba(255,252,246,.66);
+--ease:cubic-bezier(.2,.7,.2,1);--sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:var(--off);color:var(--ink);font-family:Inter,"Noto Sans Bengali",system-ui,-apple-system,sans-serif}
+.bn{font-family:"Noto Sans Bengali",Inter,sans-serif}
+/* ===== SKY / ENVIRONMENT ===== */
+.sky{position:fixed;inset:0;transition:opacity 2.4s ease}
+.sky-d{background:linear-gradient(180deg,#d6e7f5 0%,#eaf1f3 42%,#faf6ef 74%,#f1e2cc 100%)}
+.sky-n{background:linear-gradient(180deg,#0e1b32 0%,#1a2e4f 55%,#2a3f60 100%);opacity:0}
+body.night .sky-n{opacity:1}
+.glow{position:fixed;width:80vmax;height:80vmax;left:-20vmax;top:-30vmax;border-radius:50%;pointer-events:none;
+background:radial-gradient(circle,rgba(255,244,222,.55),transparent 62%);animation:drift 28s ease-in-out infinite alternate;transition:opacity 2s}
+body.night .glow{opacity:.18}
+@keyframes drift{to{transform:translate3d(30vmax,12vmax,0)}}
+#fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none}
+/* ===== SCREENS ===== */
+.screen{position:fixed;inset:0;display:flex;padding:calc(24px + var(--sat)) 20px calc(24px + var(--sab));overflow-x:hidden;overflow-y:auto;
+opacity:0;visibility:hidden;transform:scale(1.03);filter:blur(14px);transition:opacity 1s var(--ease),transform 1.2s var(--ease),filter 1s var(--ease),visibility 0s 1s}
+.screen.active{opacity:1;visibility:visible;transform:none;filter:none;transition-delay:0s}
+.wrap{margin:auto;width:min(100%,560px);text-align:center;display:flex;flex-direction:column;align-items:center;gap:26px}
+.txt{font-size:clamp(1.25rem,4.8vw,1.9rem);line-height:1.95;font-weight:500;max-width:30ch}
+.txt.en{font-family:Inter,sans-serif;font-weight:500;line-height:1.6;max-width:34ch}
+body.night .screen:not(#admin) .txt{color:#eef3fa;text-shadow:0 0 24px rgba(160,200,255,.35)}
+.sub{font-size:.8rem;color:var(--cara-d);opacity:.8}
+/* staggered reveal */
+.ln{opacity:0;transform:translateY(14px) scale(.98);filter:blur(10px);letter-spacing:.05em;transition:opacity 1.4s var(--ease),transform 1.4s var(--ease),filter 1.4s var(--ease),letter-spacing 1.6s var(--ease)}
+.go .ln{opacity:1;transform:none;filter:none;letter-spacing:0}
+.w{display:inline-block;margin-right:.28em}
+/* ===== CARDS & BUTTONS ===== */
+.card{width:min(100%,520px);padding:clamp(26px,6vw,40px);border-radius:30px;background:var(--glass);backdrop-filter:blur(22px) saturate(1.3);-webkit-backdrop-filter:blur(22px) saturate(1.3);
+border:1px solid rgba(255,255,255,.75);box-shadow:0 24px 70px rgba(120,90,50,.16);display:flex;flex-direction:column;align-items:center;gap:22px}
+.card h2{font-size:clamp(1.3rem,5vw,1.7rem);font-weight:600;line-height:1.35;letter-spacing:-.01em}
+.card .alt{display:none}.card.no .main{display:none}.card.no .alt{display:flex;flex-direction:column;align-items:center;gap:20px}
+.row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;width:100%}
+.btn{appearance:none;border:0;cursor:pointer;font:600 .95rem Inter,sans-serif;padding:14px 30px;min-width:120px;border-radius:999px;color:#fff;
+background:linear-gradient(180deg,#d1a46b,#bd8e55);box-shadow:0 8px 20px rgba(154,112,64,.32),inset 0 1px 0 rgba(255,255,255,.35);transition:transform .2s var(--ease),box-shadow .2s,opacity .5s}
+.btn:hover{transform:translateY(-1px);box-shadow:0 12px 26px rgba(154,112,64,.36),inset 0 1px 0 rgba(255,255,255,.35)}
+.btn:active{transform:scale(.95)}
+.btn.sec{background:rgba(255,255,255,.8);color:var(--ink);box-shadow:0 6px 16px rgba(80,70,50,.12),inset 0 0 0 1px rgba(196,151,95,.28)}
+.btn:focus-visible,#track:focus-visible{outline:3px solid var(--blue-d);outline-offset:3px}
+.btn:disabled{opacity:.5;pointer-events:none}
+.hide{opacity:0;pointer-events:none}
+body.night .btn.sec{background:rgba(255,255,255,.14);color:#eef3fa;box-shadow:inset 0 0 0 1px rgba(255,255,255,.3)}
+/* ===== SIGNATURE ===== */
+#sig{width:100%;height:clamp(170px,32dvh,240px);border-radius:20px;background:#fffdf8;touch-action:none;cursor:crosshair;box-shadow:inset 0 0 0 1px rgba(196,151,95,.35),inset 0 2px 10px rgba(120,90,50,.08)}
+.sigwrap{position:relative;width:100%}.sigwrap::after{content:"";position:absolute;left:8%;right:8%;bottom:34px;border-bottom:1px dashed rgba(154,112,64,.4);pointer-events:none}
+/* ===== LOVE SLIDER ===== */
+.score{font-size:clamp(2.4rem,11vw,4rem);font-weight:600;letter-spacing:-.03em;font-variant-numeric:tabular-nums;color:var(--cara-d);line-height:1.1;word-break:break-all}
+.lbl{font-size:.78rem;letter-spacing:.18em;color:var(--olive);font-weight:600}
+#track{position:relative;width:100%;height:14px;border-radius:99px;background:rgba(143,182,214,.35);touch-action:none;cursor:pointer;margin:26px 0 30px;box-shadow:inset 0 1px 3px rgba(60,80,100,.18)}
+#fill{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:99px;background:linear-gradient(90deg,var(--blue-d),var(--cara))}
+#knob{position:absolute;top:50%;left:0;width:42px;height:42px;margin:-21px 0 0 -21px;border-radius:50%;background:#fffdf8;display:grid;place-items:center;color:var(--cara);font-size:1.1rem;
+box-shadow:0 8px 20px rgba(120,90,50,.3),0 0 0 1px rgba(196,151,95,.3);transition:transform .2s var(--ease)}
+#track.drag #knob{transform:scale(1.15)}
+.tick{position:absolute;top:26px;transform:translateX(-50%);font-size:.66rem;color:var(--ink);opacity:.55;white-space:nowrap}
+.tick:first-child{transform:none}.tick:last-child{transform:translateX(-100%)}
+.nudge{width:44px;min-width:0;padding:10px 0;font-size:1.2rem}
+.final-sig{height:64px;max-width:70%;opacity:.9}
+/* ===== TOAST ===== */
+#toast{position:fixed;left:50%;bottom:calc(24px + var(--sab));transform:translate(-50%,30px);opacity:0;z-index:200;padding:12px 20px;border-radius:99px;background:var(--glass);backdrop-filter:blur(18px);
+box-shadow:0 10px 30px rgba(0,0,0,.18);font-size:.85rem;max-width:90vw;text-align:center;transition:.5s var(--ease);pointer-events:none}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+/* ===== ADMIN ===== */
+#admin{z-index:100;background:#f6f1e8;color:var(--ink);padding:0;display:none;flex-direction:column;opacity:1;visibility:visible;transform:none;filter:none;overflow:auto}
+#admin.open{display:flex}
+.ad{width:min(100%,1100px);margin:0 auto;padding:calc(20px + var(--sat)) 16px calc(24px + var(--sab))}
+.ad h1{font-size:1.35rem;font-weight:600;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.ad .note{font-size:.75rem;opacity:.65;margin:6px 0 16px;line-height:1.5}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px}
+.st{background:#fff;border-radius:18px;padding:14px;box-shadow:0 4px 16px rgba(120,90,50,.08)}
+.st b{display:block;font-size:1.5rem;font-weight:600;color:var(--cara-d);margin-top:4px;word-break:break-all}.st span{font-size:.68rem;letter-spacing:.1em;opacity:.65}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.bar input,.bar select{font:inherit;font-size:.88rem;padding:10px 14px;border-radius:12px;border:1px solid rgba(196,151,95,.35);background:#fff;color:var(--ink);flex:1 1 140px;min-width:0}
+.item{display:grid;grid-template-columns:1fr auto;gap:6px 12px;background:#fff;border-radius:16px;padding:14px;margin-bottom:8px;cursor:pointer;box-shadow:0 3px 12px rgba(120,90,50,.07);transition:transform .2s}
+.item:hover{transform:translateY(-2px)}.item small{opacity:.6;font-size:.74rem;word-break:break-all}.item .pc{font-weight:600;color:var(--cara-d);text-align:right}
+.tag{display:inline-block;font-size:.7rem;font-weight:600;padding:3px 9px;border-radius:99px;margin-right:4px;background:#e8f0e0;color:#5c6b42}.tag.n{background:#f5e3de;color:#8b4a3b}.tag.m{background:#eee;color:#777}
+#detail{position:fixed;inset:0;z-index:110;background:rgba(40,30,20,.45);display:none;padding:16px;overflow:auto}#detail.open{display:flex}
+.dc{margin:auto;width:min(100%,520px);background:#fffdf8;border-radius:24px;padding:24px;display:flex;flex-direction:column;gap:12px}
+.dc dl{display:grid;grid-template-columns:auto 1fr;gap:8px 14px;font-size:.88rem}.dc dt{opacity:.6}.dc dd{word-break:break-all}
+.dc img{width:100%;background:#fff;border-radius:14px;box-shadow:inset 0 0 0 1px rgba(196,151,95,.3)}
+@media (prefers-reduced-motion:reduce){.glow{animation:none}.ln,.screen{transition-duration:.3s!important}}
+</style>
+</head>
+<body>
+<div class="sky sky-d"></div><div class="sky sky-n"></div><div class="glow"></div>
+<canvas id="fx"></canvas>
+
+<!-- SCREEN 01: opening -->
+<section class="screen" id="s1"><div class="wrap">
+  <p class="txt bn" id="msg" aria-live="polite"></p>
+  <button class="btn sec hide" id="c1">Continue</button>
+</div></section>
+
+<!-- SCREEN 02: Bengali night text -->
+<section class="screen" id="s2"><div class="wrap"><p class="txt bn" id="bnLines"></p></div></section>
+
+<!-- SCREEN 03: permanent list -->
+<section class="screen" id="s3"><div class="wrap"><div class="card" id="q1">
+  <div class="main" style="display:flex;flex-direction:column;align-items:center;gap:22px;width:100%">
+    <h2 class="ln">Do you want to permanently write your name on my list?</h2>
+    <div class="row ln"><button class="btn" id="y1">YES</button><button class="btn sec" id="n1">NO</button></div>
+  </div>
+  <div class="alt"><h2>That's okay. 🤍</h2><p class="sub">The page will stay open for you, whenever you're ready.</p><button class="btn sec" id="b1">Ask me again</button></div>
+</div></div></section>
+
+<!-- SCREEN 04: signature -->
+<section class="screen" id="s4"><div class="wrap"><div class="card">
+  <h2 class="ln">Sign here</h2>
+  <div class="sigwrap ln"><canvas id="sig" aria-label="Signature drawing area"></canvas></div>
+  <div class="row ln"><button class="btn sec" id="clr">CLEAR</button><button class="btn" id="sub">SUBMIT SIGNATURE</button></div>
+</div></div></section>
+
+<!-- SCREEN 05: Banglish text -->
+<section class="screen" id="s5"><div class="wrap"><p class="txt en" id="blLines"></p><button class="btn sec hide" id="c5">Continue</button></div></section>
+
+<!-- SCREEN 06: love question -->
+<section class="screen" id="s6"><div class="wrap"><div class="card" id="q2">
+  <div class="main" style="display:flex;flex-direction:column;align-items:center;gap:22px;width:100%">
+    <h2 class="ln">Do you love me?</h2>
+    <div class="row ln"><button class="btn" id="y2">YES</button><button class="btn sec" id="n2">NO</button></div>
+  </div>
+  <div class="alt"><h2>I'll be right here. 🤍</h2><p class="sub">Take your time. Nothing is lost.</p><button class="btn sec" id="b2">Let me think again</button></div>
+</div></div></section>
+
+<!-- SCREEN 07: love percentage -->
+<section class="screen" id="s7"><div class="wrap"><div class="card">
+  <h2 class="ln">How much do you love me?</h2>
+  <div class="ln"><div class="lbl">LOVE SCORE</div><div class="score" id="score">1%</div></div>
+  <div id="track" class="ln" role="slider" tabindex="0" aria-label="Love score" aria-valuemin="1" aria-valuemax="500000" aria-valuenow="1"><div id="fill"></div><div id="knob">♥</div></div>
+  <div class="row ln"><button class="btn sec nudge" id="dn" aria-label="Decrease">−</button><button class="btn" id="sendLove">SEND MY LOVE</button><button class="btn sec nudge" id="up" aria-label="Increase">+</button></div>
+</div></div></section>
+
+<!-- SCREEN 08: final -->
+<section class="screen" id="s8"><div class="wrap">
+  <div class="ln"><div class="lbl">LOVE SCORE</div><div class="score" id="fscore">0%</div></div>
+  <p class="txt ln">No number is big enough,<br>but I will keep this one forever. 🤍</p>
+  <div class="ln" id="sigState" style="display:flex;flex-direction:column;align-items:center;gap:6px"></div>
+</div></section>
+
+<!-- ADMIN (hidden; opened with P + P) -->
+<section class="screen" id="admin"><div class="ad">
+  <h1>Responses <button class="btn sec" id="adClose" style="padding:9px 18px;min-width:0">Close</button></h1>
+  <p class="note">Hidden UI only — not authentication. If your Realtime Database rules allow public reads, anyone with the endpoint can read this data. Add Firebase Authentication and restrict rules before sharing.</p>
+  <div class="stats" id="stats"></div>
+  <div class="bar"><input id="q" type="search" placeholder="Search session, answer, date…"><select id="sort"><option value="new">Newest first</option><option value="pct">Highest percentage</option></select>
+  <select id="flt"><option value="all">All responses</option><option value="lyes">Love: YES</option><option value="lno">Love: NO</option><option value="pyes">List: YES</option><option value="pno">List: NO</option></select><button class="btn" id="refresh" style="padding:10px 20px;min-width:0">Refresh</button></div>
+  <div id="list"></div>
+</div></section>
+<div id="detail"><div class="dc" id="dc"></div></div>
+<div id="toast" role="status"></div>
+
+<script type="module">
+/* ===================================================== FIREBASE ===================================================== */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, update, get, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCA1KFq0nAuNvc8JdBVD-e_M1XP2Xh9oN0",
+  authDomain: "ddwd-1319a.firebaseapp.com",
+  databaseURL: "https://ddwd-1319a-default-rtdb.firebaseio.com",
+  projectId: "ddwd-1319a",
+  storageBucket: "ddwd-1319a.firebasestorage.app",
+  messagingSenderId: "1076830108913",
+  appId: "1:1076830108913:web:22958d3dfd682df0cebd50",
+  measurementId: "G-7DBZN7HNVP"
+};
+let db = null;
+try { db = getDatabase(initializeApp(firebaseConfig)); } catch (e) { console.error(e); }
+
+/* ===================================================== EDITABLE CONTENT ===================================================== */
+// Opening message (kept exactly as written; Bengali part and English part are split into two lines).
+const OPENING_BN = "তোমার মতো হাজারটা মানুষ থাকলেও, আমার পছন্দের তালিকায় শুধু তুমিই থাকবে!";
+const OPENING_EN = "I like only you, always you.!! ❤️ 🐣 🕊️";
+const BN_LINES = ["তোমাকে ভালোবাসি!","অসম্ভব ভালোবাসি!","অনেক ভালোবাসি!","প্রচুর ভালোবাসি!","পাগলের মতো ভালোবাসি!","নিজের থেকেও বেশি ভালোবাসি।"];
+// >>> REPLACE these with your own Banglish lines (the text you wanted shown on screen 05). <<<
+const BANGLISH_LINES = ["Tumi amar shob kichur moddhe shobcheye alada.","Tomar hashi dekhlei amar poro din shundor hoye jay.","Ei list-e shudhu tomar naam-i thakbe."];
+
+/* ===================================================== UTILITIES ===================================================== */
+const $ = s => document.querySelector(s);
+const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+const fmt = n => Number(n).toLocaleString("en-US") + "%";
+let tok = 0; // invalidates stale timers when screens change
+const later = (ms, fn) => { const t = tok; setTimeout(() => { if (t === tok) fn(); }, RM ? ms * .4 : ms); };
+function toast(m) { const t = $("#toast"); t.textContent = m; t.classList.add("on"); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove("on"), 3800); }
+
+/* ===================================================== DATABASE ===================================================== */
+const sessionId = (crypto.randomUUID ? crypto.randomUUID() : Date.now() + "-" + Math.random().toString(36).slice(2)).replace(/[.#$/\[\]]/g, "");
+let created = false;
+const state = { listAnswer: null, signature: null, loveAnswer: null, percent: null };
+// Writes a partial update to responses/<sessionId>. Never blocks the story for long; shows a friendly toast on failure.
+async function save(data, wait = false) {
+  if (!db) { toast("Can't reach the database right now — your answers aren't being saved."); return false; }
+  const payload = { sessionId, ...data, updatedAt: serverTimestamp() };
+  if (!created) Object.assign(payload, { createdAt: serverTimestamp(), completed: false, userAgent: navigator.userAgent.slice(0, 200), screenWidth: innerWidth, screenHeight: innerHeight });
+  const p = update(ref(db, "responses/" + sessionId), payload).then(() => { created = true; return true; }).catch(e => { console.error(e); toast("Couldn't save that just now. Please check your connection."); return false; });
+  if (!wait) return p;
+  return Promise.race([p, new Promise(r => setTimeout(() => { toast("Saving is taking a while — continuing for now."); r(false); }, 5000))]);
+}
+
+/* ===================================================== ANIMATIONS: text reveal ===================================================== */
+// Fills element with .ln children (one per line or word)
+function lines(el, arr, cls = "") { el.innerHTML = arr.map(t => `<span class="ln ${cls}" style="display:block">${esc(t)}</span>`).join(""); }
+function words(el, text) { el.innerHTML = text.split(" ").map(w => `<span class="ln w">${esc(w)}</span>`).join(""); }
+function reveal(root, step = .9, start = 0) {
+  const k = RM ? .3 : 1, els = root.querySelectorAll(".ln");
+  els.forEach((e, i) => e.style.transitionDelay = (start + i * step) * k + "s");
+  void root.offsetWidth; root.classList.add("go");
+  return (start + els.length * step + 1.4) * k * 1000; // total ms
+}
+function unreveal(root) { root.classList.remove("go"); root.querySelectorAll(".ln").forEach(e => e.style.transitionDelay = ""); }
+
+/* ===================================================== ANIMATIONS: background canvas ===================================================== */
+const cv = $("#fx"), cx = cv.getContext("2d");
+let W = 0, H = 0, DPR = 1, px = 0, py = 0, tx = 0, ty = 0;
+function resizeFx() { DPR = Math.min(devicePixelRatio || 1, 2); W = innerWidth; H = innerHeight; cv.width = W * DPR; cv.height = H * DPR; cx.setTransform(DPR, 0, 0, DPR, 0, 0); }
+addEventListener("resize", resizeFx); resizeFx();
+addEventListener("pointermove", e => { tx = e.clientX / W - .5; ty = e.clientY / H - .5; });
+// target particle counts per scene
+const MODES = {
+  day:   { cloud: 5, petal: 14, spark: 16, glyph: 3, rain: 0,   heart: 0 },
+  night: { cloud: 2, petal: 0,  spark: 10, glyph: 0, rain: 110, heart: 9 },
+  final: { cloud: 4, petal: 22, spark: 24, glyph: 5, rain: 26,  heart: 12 }
+};
+let target = MODES.day; const parts = []; const K = RM ? .35 : 1; const GLYPHS = ["🌸", "🍪", "🐱", "🌼"];
+const rnd = (a, b) => a + Math.random() * (b - a);
+function make(type, fresh) {
+  const z = rnd(.45, 1);
+  const p = { type, z, x: rnd(0, W), y: fresh ? rnd(-.1, 1) * H : -30, s: rnd(.7, 1.3), r: rnd(0, 6.28), vr: rnd(-1, 1), age: -rnd(0, 4), ph: rnd(0, 6.28) };
+  if (type === "cloud") { p.y = rnd(.02, .55) * H; p.x = fresh ? rnd(-100, W) : -260; p.w = rnd(180, 360) * z; p.vx = rnd(5, 12) * z; }
+  if (type === "petal") { p.vx = rnd(-8, 14); p.vy = rnd(18, 40) * z; p.col = ["#e9cfae", "#f6ead9", "#c4975f", "#a9b88a"][Math.floor(rnd(0, 4))]; }
+  if (type === "spark") { p.y = rnd(0, H); p.vx = 0; p.vy = rnd(-3, 3); }
+  if (type === "glyph") { p.vx = rnd(-6, 8); p.vy = rnd(14, 28); p.g = GLYPHS[Math.floor(rnd(0, 4))]; }
+  if (type === "rain") { p.vx = -60 * z; p.vy = rnd(520, 760) * z; p.l = rnd(10, 22) * z; }
+  if (type === "heart") { p.y = fresh ? rnd(0, H) : H + 20; p.vx = rnd(-6, 6); p.vy = -rnd(14, 30) * z; }
+  return p;
+}
+function setScene(name) { target = MODES[name]; }
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min((now - last) / 1000, .05); last = now;
+  // spawn up to target (gradually, so the environment builds up)
+  for (const t in target) {
+    const want = Math.round(target[t] * (t === "rain" ? K : K)); let have = 0;
+    for (const p of parts) if (p.type === t) have++;
+    if (have < want && Math.random() < .08) parts.push(make(t, false));
+    else if (have < want && !parts.some(p => p.type === t)) parts.push(make(t, true));
+  }
+  px += (tx - px) * .04; py += (ty - py) * .04;
+  cx.clearRect(0, 0, W, H);
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const p = parts[i]; p.age += dt; if (p.age < 0) continue;
+    const want = Math.round((target[p.type] || 0) * K); let have = 0; for (const q of parts) if (q.type === p.type) have++;
+    const fade = Math.min(p.age / 2, 1), ox = px * 26 * p.z, oy = py * 14 * p.z;
+    p.r += p.vr * dt; p.ph += dt;
+    if (p.vx) p.x += p.vx * dt; if (p.vy) p.y += p.vy * dt;
+    if (p.type === "petal" || p.type === "glyph") p.x += Math.sin(p.ph * .9) * 14 * dt;
+    let out = p.y > H + 40 || p.y < -60 || p.x > W + 400 || p.x < -420;
+    if (out) { if (have > want) { parts.splice(i, 1); continue; } Object.assign(p, make(p.type, false), { age: 0 }); continue; }
+    if (have > want + 2 && Math.random() < .004) { parts.splice(i, 1); continue; } // thin out when scene changes
+    cx.save(); cx.translate(p.x + ox, p.y + oy);
+    const night = document.body.classList.contains("night");
+    if (p.type === "cloud") {
+      cx.scale(1, .42); const g = cx.createRadialGradient(0, 0, 0, 0, 0, p.w / 2);
+      g.addColorStop(0, night ? "rgba(150,175,210,.16)" : "rgba(255,255,255,.55)"); g.addColorStop(1, "rgba(255,255,255,0)");
+      cx.globalAlpha = fade; cx.fillStyle = g; cx.beginPath(); cx.arc(0, 0, p.w / 2, 0, 6.3); cx.fill();
+    } else if (p.type === "petal") {
+      cx.rotate(p.r); cx.scale(1, Math.abs(Math.sin(p.ph)) * .6 + .4); cx.globalAlpha = .75 * fade * p.z; cx.fillStyle = p.col;
+      cx.beginPath(); cx.ellipse(0, 0, 6 * p.s, 3.2 * p.s, 0, 0, 6.3); cx.fill();
+    } else if (p.type === "spark") {
+      const a = (Math.sin(p.ph * 1.6) + 1) / 2 * fade; cx.globalAlpha = a * .8; cx.fillStyle = night ? "#dfeaff" : "#fff"; const s = 3 * p.s * p.z;
+      cx.beginPath(); cx.moveTo(0, -s * 2); cx.quadraticCurveTo(0, 0, s * 2, 0); cx.quadraticCurveTo(0, 0, 0, s * 2); cx.quadraticCurveTo(0, 0, -s * 2, 0); cx.quadraticCurveTo(0, 0, 0, -s * 2); cx.fill();
+    } else if (p.type === "glyph") {
+      cx.rotate(Math.sin(p.ph) * .3); cx.globalAlpha = .55 * fade * p.z; cx.font = 20 * p.z + "px serif"; cx.textAlign = "center"; cx.fillText(p.g, 0, 0);
+    } else if (p.type === "rain") {
+      cx.globalAlpha = .4 * fade * p.z; cx.strokeStyle = "#bcd4ee"; cx.lineWidth = 1; cx.beginPath(); cx.moveTo(0, 0); cx.lineTo(p.vx * .02, p.l); cx.stroke();
+    } else if (p.type === "heart") {
+      cx.globalAlpha = .5 * fade * p.z; cx.fillStyle = night ? "#f3c9cf" : "#d9a79a"; cx.font = 16 * p.z * p.s + "px serif"; cx.textAlign = "center"; cx.fillText("♥", 0, 0);
+    }
+    cx.restore();
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+/* ===================================================== SCREEN MANAGEMENT ===================================================== */
+// scene (sky + particles) is set first, then the screen content fades in ~0.9s later: environment → text → interaction
+const SCENES = { s1: "day", s2: "night", s3: "day", s4: "day", s5: "night", s6: "day", s7: "day", s8: "final" };
+let current = null;
+const hooks = {};
+function go(id) {
+  tok++; const prev = current; current = id;
+  document.querySelectorAll(".screen.active:not(#admin)").forEach(s => s.classList.remove("active"));
+  const sc = SCENES[id]; document.body.classList.toggle("night", sc === "night"); setScene(sc);
+  const t = tok; setTimeout(() => { if (t !== tok) return; $("#" + id).classList.add("active"); hooks[id] && hooks[id](); }, prev ? 900 : 200);
+}
+function showCard(id) { const el = $("#" + id); unreveal(el); reveal(el, .5, .3); }
+
+hooks.s1 = () => {
+  const m = $("#msg"); m.innerHTML = ""; unreveal(m);
+  // environment plays alone first, then the message appears slowly
+  later(2200, () => {
+    m.innerHTML = `<span style="display:block">${OPENING_BN.split(" ").map(w => `<span class="ln w">${esc(w)}</span>`).join("")}</span><span class="ln" style="display:block;margin-top:14px;font-family:Inter,sans-serif;font-size:.85em;color:var(--cara-d)">${esc(OPENING_EN)}</span>`;
+    const total = reveal(m, .16, 0);
+    later(total + 400, () => $("#c1").classList.remove("hide"));
+  });
+};
+hooks.s2 = () => { const el = $("#bnLines"); lines(el, BN_LINES); unreveal(el); later(900, () => { const t = reveal(el, 1.5, 0); later(t + 1800, () => go("s3")); }); };
+hooks.s3 = () => { $("#q1").classList.remove("no"); showCard("q1"); };
+hooks.s4 = () => { sizeSig(); clearSig(); const c = $("#s4 .card"); unreveal(c); reveal(c, .5, .2); };
+hooks.s5 = () => { const el = $("#blLines"); lines(el, BANGLISH_LINES); unreveal(el); $("#c5").classList.add("hide"); later(900, () => { const t = reveal(el, 1.8, 0); later(t + 600, () => $("#c5").classList.remove("hide")); }); };
+hooks.s6 = () => { $("#q2").classList.remove("no"); showCard("q2"); };
+hooks.s7 = () => { const c = $("#s7 .card"); unreveal(c); reveal(c, .45, .2); setT(0, true); };
+hooks.s8 = () => {
+  const w = $("#s8 .wrap"); unreveal(w); reveal(w, .9, .3);
+  countTo($("#fscore"), 0, state.percent || 1, 2800);
+  const ok = !!state.signature;
+  $("#sigState").innerHTML = (ok ? `<img class="final-sig" alt="Your signature" src="${state.signature}">` : "") + `<span class="sub">${ok ? "✓ Signature received" : "Signature not provided"}</span>`;
+};
+
+$("#c1").onclick = () => go("s2");
+$("#c5").onclick = () => go("s6");
+$("#y1").onclick = () => { state.listAnswer = "yes"; save({ permanentListAnswer: "yes" }); go("s4"); };
+$("#n1").onclick = () => { state.listAnswer = "no"; save({ permanentListAnswer: "no" }); $("#q1").classList.add("no"); };
+$("#b1").onclick = () => $("#q1").classList.remove("no");
+$("#y2").onclick = () => { state.loveAnswer = "yes"; save({ loveAnswer: "yes" }); go("s7"); };
+$("#n2").onclick = () => { state.loveAnswer = "no"; save({ loveAnswer: "no", completed: true }); $("#q2").classList.add("no"); };
+$("#b2").onclick = () => $("#q2").classList.remove("no");
+
+/* ===================================================== SIGNATURE CANVAS ===================================================== */
+const sg = $("#sig"), sc = sg.getContext("2d"); let drawing = false, ink = false, lp = null, lm = null;
+function sizeSig() { // use offset sizes so the card's scale transition doesn't distort measurements
+  const d = Math.min(devicePixelRatio || 1, 2); sg.width = sg.offsetWidth * d; sg.height = sg.offsetHeight * d;
+  sc.setTransform(d, 0, 0, d, 0, 0); sc.lineWidth = 2.8; sc.lineCap = sc.lineJoin = "round"; sc.strokeStyle = "#4a3d2f";
+}
+function clearSig() { sc.save(); sc.setTransform(1, 0, 0, 1, 0, 0); sc.clearRect(0, 0, sg.width, sg.height); sc.restore(); ink = false; }
+const pt = e => { const r = sg.getBoundingClientRect(); return { x: (e.clientX - r.left) * (sg.offsetWidth / r.width), y: (e.clientY - r.top) * (sg.offsetHeight / r.height) }; };
+sg.addEventListener("pointerdown", e => { e.preventDefault(); sg.setPointerCapture(e.pointerId); drawing = true; lp = lm = pt(e); sc.beginPath(); sc.arc(lp.x, lp.y, 1.4, 0, 6.3); sc.fillStyle = "#4a3d2f"; sc.fill(); ink = true; });
+sg.addEventListener("pointermove", e => {
+  if (!drawing) return;
+  for (const ev of (e.getCoalescedEvents ? e.getCoalescedEvents() : [e])) { // smooth quadratic strokes
+    const p = pt(ev), m = { x: (lp.x + p.x) / 2, y: (lp.y + p.y) / 2 };
+    sc.beginPath(); sc.moveTo(lm.x, lm.y); sc.quadraticCurveTo(lp.x, lp.y, m.x, m.y); sc.stroke(); lm = m; lp = p;
+  }
+});
+["pointerup", "pointercancel", "pointerleave"].forEach(n => sg.addEventListener(n, () => drawing = false));
+addEventListener("resize", () => { if (!ink && current === "s4") sizeSig(); });
+$("#clr").onclick = clearSig;
+$("#sub").onclick = async () => {
+  if (!ink) { toast("Please draw your signature first."); return; }
+  const o = document.createElement("canvas"), w = 600, h = Math.round(w * sg.height / sg.width); o.width = w; o.height = h;
+  o.getContext("2d").drawImage(sg, 0, 0, w, h);
+  state.signature = o.toDataURL("image/png");
+  const b = $("#sub"); b.disabled = true; b.textContent = "SAVING…";
+  await save({ signature: state.signature }, true);
+  b.disabled = false; b.textContent = "SUBMIT SIGNATURE"; go("s5");
+};
+
+/* ===================================================== LOVE PERCENTAGE ===================================================== */
+// Logarithmic mapping so both 1% and 500,000% are reachable on one slider.
+const MAX = 500000, LOGMAX = Math.log(MAX), track = $("#track"), knob = $("#knob"), fill = $("#fill");
+let tPos = 0, val = 1, shown = 1, anim = false;
+const tToV = t => Math.max(1, Math.min(MAX, Math.round(Math.exp(t * LOGMAX))));
+[[1, "1%"], [100, "100"], [1000, "1K"], [10000, "10K"], [100000, "100K"], [500000, "500K"]].forEach(([v, l]) => {
+  const s = document.createElement("span"); s.className = "tick"; s.style.left = Math.log(v) / LOGMAX * 100 + "%"; s.textContent = l; track.appendChild(s);
+});
+function setT(t, snap) {
+  tPos = Math.max(0, Math.min(1, t)); val = tToV(tPos);
+  knob.style.left = fill.style.width = tPos * 100 + "%"; track.setAttribute("aria-valuenow", val);
+  if (snap) { shown = val; $("#score").textContent = fmt(val); } else if (!anim) { anim = true; requestAnimationFrame(tick); }
+}
+function tick() { // smooth animated counter
+  shown += (val - shown) * .2; if (Math.abs(val - shown) < .5) { shown = val; anim = false; }
+  $("#score").textContent = fmt(Math.round(shown)); if (anim) requestAnimationFrame(tick);
+}
+const fromX = x => { const r = track.getBoundingClientRect(); setT((x - r.left) / r.width); };
+track.addEventListener("pointerdown", e => { track.setPointerCapture(e.pointerId); track.classList.add("drag"); track.focus(); fromX(e.clientX); });
+track.addEventListener("pointermove", e => { if (track.classList.contains("drag")) fromX(e.clientX); });
+["pointerup", "pointercancel"].forEach(n => track.addEventListener(n, () => track.classList.remove("drag")));
+track.addEventListener("keydown", e => {
+  const f = e.shiftKey ? .0005 : .004, m = { ArrowRight: f, ArrowUp: f, ArrowLeft: -f, ArrowDown: -f, PageUp: .05, PageDown: -.05 };
+  if (e.key in m) { e.preventDefault(); setT(tPos + m[e.key]); } else if (e.key === "Home") setT(0); else if (e.key === "End") setT(1);
+});
+// +/- buttons: exact fine-tuning (about 1% of the current value, minimum 1)
+const nudge = d => { const n = Math.max(1, Math.round(val * .01)); setT(Math.log(Math.max(1, Math.min(MAX, val + d * n))) / LOGMAX); };
+$("#up").onclick = () => nudge(1); $("#dn").onclick = () => nudge(-1);
+$("#sendLove").onclick = async () => {
+  const b = $("#sendLove"); b.disabled = true; state.percent = val;
+  await save({ loveAnswer: "yes", lovePercentage: val, completed: true }, true);
+  b.disabled = false; go("s8");
+};
+function countTo(el, from, to, ms) {
+  const t0 = performance.now(); ms = RM ? 400 : ms;
+  (function s(n) { const k = Math.min((n - t0) / ms, 1), e = 1 - Math.pow(1 - k, 3); el.textContent = fmt(Math.round(from + (to - from) * e)); if (k < 1) requestAnimationFrame(s); })(t0);
+}
+
+/* ===================================================== ADMIN PANEL ===================================================== */
+let rows = [];
+const NP = "Not provided", has = v => v !== undefined && v !== null && v !== "";
+const yn = v => v === "yes" ? ["YES", ""] : v === "no" ? ["NO", "n"] : [NP, "m"];
+const when = v => typeof v === "number" ? new Date(v).toLocaleString() : NP;
+async function loadAdmin() {
+  $("#list").innerHTML = `<p class="note">Loading…</p>`;
+  try {
+    if (!db) throw new Error("no db");
+    const snap = await get(ref(db, "responses")), v = snap.val() || {};
+    rows = Object.entries(v).map(([id, r]) => ({ id, ...r }));
+    renderAdmin();
+  } catch (e) { console.error(e); $("#list").innerHTML = `<p class="note">Couldn't load responses. Check your connection and the database rules.</p>`; }
+}
+function renderAdmin() {
+  const n = rows.length, done = rows.filter(r => r.completed).length, c = f => rows.filter(f).length;
+  const pcs = rows.map(r => r.lovePercentage).filter(x => typeof x === "number"), avg = pcs.length ? Math.round(pcs.reduce((a, b) => a + b, 0) / pcs.length) : null;
+  const S = [["TOTAL", n], ["COMPLETED", done], ["LIST · YES", c(r => r.permanentListAnswer === "yes")], ["LIST · NO", c(r => r.permanentListAnswer === "no")],
+    ["LOVE · YES", c(r => r.loveAnswer === "yes")], ["LOVE · NO", c(r => r.loveAnswer === "no")], ["AVERAGE LOVE", avg === null ? NP : fmt(avg)], ["HIGHEST LOVE", pcs.length ? fmt(Math.max(...pcs)) : NP]];
+  $("#stats").innerHTML = S.map(([l, v]) => `<div class="st"><span>${l}</span><b>${esc(v)}</b></div>`).join("");
+  const q = $("#q").value.trim().toLowerCase(), f = $("#flt").value;
+  let L = rows.filter(r => ({ all: 1, lyes: r.loveAnswer === "yes", lno: r.loveAnswer === "no", pyes: r.permanentListAnswer === "yes", pno: r.permanentListAnswer === "no" })[f]);
+  if (q) L = L.filter(r => [r.sessionId || r.id, r.permanentListAnswer, r.loveAnswer, r.lovePercentage, when(r.createdAt)].join(" ").toLowerCase().includes(q));
+  L.sort($("#sort").value === "pct" ? (a, b) => (b.lovePercentage || 0) - (a.lovePercentage || 0) : (a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+  $("#list").innerHTML = L.length ? L.map(r => { const a = yn(r.permanentListAnswer), b = yn(r.loveAnswer);
+    return `<div class="item" data-id="${esc(r.id)}"><div><span class="tag ${a[1]}">List: ${a[0]}</span><span class="tag ${b[1]}">Love: ${b[0]}</span><span class="tag ${r.completed ? "" : "m"}">${r.completed ? "Completed" : "In progress"}</span></div>
+    <div class="pc">${has(r.lovePercentage) ? fmt(r.lovePercentage) : NP}</div><small>${esc(when(r.createdAt))}</small><small style="text-align:right">${esc((r.sessionId || r.id).slice(0, 8))}</small></div>`; }).join("") : `<p class="note">No responses match.</p>`;
+}
+$("#list").addEventListener("click", e => {
+  const it = e.target.closest(".item"); if (!it) return; const r = rows.find(x => x.id === it.dataset.id); if (!r) return;
+  const sig = typeof r.signature === "string" && r.signature.startsWith("data:image/png;base64,") ? `<img alt="Signature" src="${r.signature}">` : `<p class="note">Signature: ${NP}</p>`;
+  $("#dc").innerHTML = `<h2 style="font-size:1.2rem">Response details</h2>${sig}<dl>
+    <dt>Permanent list</dt><dd>${yn(r.permanentListAnswer)[0]}</dd><dt>Do you love me?</dt><dd>${yn(r.loveAnswer)[0]}</dd>
+    <dt>Love percentage</dt><dd>${has(r.lovePercentage) ? fmt(r.lovePercentage) : NP}</dd><dt>Completed</dt><dd>${r.completed === true ? "Yes" : r.completed === false ? "No" : NP}</dd>
+    <dt>Submitted</dt><dd>${esc(when(r.createdAt))}</dd><dt>Session ID</dt><dd>${esc(r.sessionId || r.id)}</dd>
+    <dt>Screen</dt><dd>${has(r.screenWidth) ? esc(r.screenWidth + "×" + r.screenHeight) : NP}</dd></dl><button class="btn" id="dcClose">Close</button>`;
+  $("#detail").classList.add("open"); $("#dcClose").onclick = () => $("#detail").classList.remove("open");
+});
+$("#detail").addEventListener("click", e => { if (e.target.id === "detail") $("#detail").classList.remove("open"); });
+["q", "sort", "flt"].forEach(i => $("#" + i).addEventListener("input", renderAdmin));
+$("#refresh").onclick = loadAdmin;
+function setAdmin(open) { $("#admin").classList.toggle("open", open); if (open) loadAdmin(); else $("#detail").classList.remove("open"); }
+$("#adClose").onclick = () => setAdmin(false);
+
+/* ===================================================== KEYBOARD ADMIN TRIGGER ===================================================== */
+// P pressed twice within 500ms toggles the admin panel. This is a hidden UI trigger only — NOT authentication.
+let lastP = 0;
+addEventListener("keydown", e => {
+  if (e.key === "Escape") { setAdmin(false); return; }
+  if (e.key.toLowerCase() !== "p" || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return; // don't trigger while typing in admin search
+  const n = performance.now(); if (n - lastP < 500) { lastP = 0; setAdmin(!$("#admin").classList.contains("open")); } else lastP = n;
+});
+
+/* ===================================================== START ===================================================== */
+go("s1");
+</script>
+</body>
+</html>

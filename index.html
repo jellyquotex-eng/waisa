@@ -90,36 +90,60 @@ box-shadow:0 10px 30px rgba(0,0,0,.18);font-size:.85rem;max-width:90vw;text-alig
 .dc{margin:auto;width:min(100%,520px);background:#fffdf8;border-radius:24px;padding:24px;display:flex;flex-direction:column;gap:12px}
 .dc dl{display:grid;grid-template-columns:auto 1fr;gap:8px 14px;font-size:.88rem}.dc dt{opacity:.6}.dc dd{word-break:break-all}
 .dc img{width:100%;background:#fff;border-radius:14px;box-shadow:inset 0 0 0 1px rgba(196,151,95,.3)}
-@media (prefers-reduced-motion:reduce){.glow{animation:none}.ln,.screen{transition-duration:.3s!important}}
+/* ===== EXTRA MOTION ===== */
+.sky-w{background:linear-gradient(180deg,#f1d6c4 0%,#f6e6d6 40%,#faf6ef 78%,#efdcc2 100%);opacity:0}
+body.final .sky-w{opacity:1}
+.rays{position:fixed;left:-50%;top:-70%;width:200%;height:200%;pointer-events:none;opacity:.5;transition:opacity 2s;
+background:conic-gradient(from 0deg,transparent 0,rgba(255,246,225,.5) 4%,transparent 9%,transparent 28%,rgba(255,246,225,.4) 34%,transparent 40%,transparent 62%,rgba(255,246,225,.45) 67%,transparent 73%);
+-webkit-mask-image:radial-gradient(circle,#000 0,transparent 50%);mask-image:radial-gradient(circle,#000 0,transparent 50%);animation:spin 140s linear infinite}
+body.night .rays{opacity:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.cat{position:fixed;left:-60px;bottom:calc(10px + var(--sab));pointer-events:none;font-size:26px;animation:walk 46s linear infinite;transition:opacity 1.5s}
+.cat span{display:block;animation:hop .9s ease-in-out infinite}
+body.night .cat{opacity:0}
+@keyframes walk{to{transform:translateX(calc(100vw + 140px))}}
+@keyframes hop{50%{transform:translateY(-5px)}}
+.screen.active .wrap{animation:zoom 22s ease-out forwards}
+@keyframes zoom{from{transform:scale(1)}to{transform:scale(1.035)}}
+.card{position:relative;overflow:hidden;transform:perspective(900px) rotateX(calc(var(--ry,0)*-4deg)) rotateY(calc(var(--rx,0)*5deg));transition:transform .6s var(--ease);animation:bob 8s ease-in-out infinite}
+.card::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:1;background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.65) 50%,transparent 65%);transform:translateX(-120%)}
+.screen.active .card::before{animation:sheen 2.4s .9s ease forwards}
+@keyframes bob{50%{translate:0 -6px}}
+@keyframes sheen{to{transform:translateX(120%)}}
+.bh{position:fixed;z-index:150;pointer-events:none;animation:burst 1.2s ease-out forwards}
+@keyframes burst{from{transform:translate(-50%,-50%) scale(.4);opacity:1}to{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(1.1);opacity:0}}
+#effort{min-height:1.2em}
+@media (prefers-reduced-motion:reduce){.glow,.cat,.card,.rays,.screen.active .wrap{animation:none!important}.ln,.screen{transition-duration:.3s!important}}
 </style>
 </head>
 <body>
-<div class="sky sky-d"></div><div class="sky sky-n"></div><div class="glow"></div>
+<div class="sky sky-d"></div><div class="sky sky-w"></div><div class="sky sky-n"></div><div class="rays"></div><div class="glow"></div>
+<div class="cat"><span>🐱</span></div>
 <canvas id="fx"></canvas>
 
 <!-- SCREEN 01: opening -->
 <section class="screen" id="s1"><div class="wrap">
-  <p class="txt bn" id="msg" aria-live="polite"></p>
+  <p class="txt en" id="msg" aria-live="polite"></p>
   <button class="btn sec hide" id="c1">Continue</button>
 </div></section>
 
-<!-- SCREEN 02: Bengali night text -->
-<section class="screen" id="s2"><div class="wrap"><p class="txt bn" id="bnLines"></p></div></section>
 
 <!-- SCREEN 03: permanent list -->
 <section class="screen" id="s3"><div class="wrap"><div class="card" id="q1">
   <div class="main" style="display:flex;flex-direction:column;align-items:center;gap:22px;width:100%">
-    <h2 class="ln">Do you want to permanently write your name on my list?</h2>
+    <h2 class="ln">Do you want to be on my favorites list permanently?</h2>
     <div class="row ln"><button class="btn" id="y1">YES</button><button class="btn sec" id="n1">NO</button></div>
   </div>
   <div class="alt"><h2>That's okay. 🤍</h2><p class="sub">The page will stay open for you, whenever you're ready.</p><button class="btn sec" id="b1">Ask me again</button></div>
 </div></div></section>
 
 <!-- SCREEN 04: signature -->
-<section class="screen" id="s4"><div class="wrap"><div class="card">
+<section class="screen" id="s4"><div class="wrap"><div class="card"><div class="main" style="display:flex;flex-direction:column;align-items:center;gap:22px;width:100%">
   <h2 class="ln">Sign here</h2>
   <div class="sigwrap ln"><canvas id="sig" aria-label="Signature drawing area"></canvas></div>
   <div class="row ln"><button class="btn sec" id="clr">CLEAR</button><button class="btn" id="sub">SUBMIT SIGNATURE</button></div>
+  </div>
+  <div class="alt"><h2>Signed ✓</h2><img id="sigPrev" class="final-sig" alt="Your signature"><p class="sub">Your name is on my list now. 🤍</p><button class="btn" id="c4">Continue</button></div>
 </div></div></section>
 
 <!-- SCREEN 05: Banglish text -->
@@ -139,6 +163,7 @@ box-shadow:0 10px 30px rgba(0,0,0,.18);font-size:.85rem;max-width:90vw;text-alig
   <h2 class="ln">How much do you love me?</h2>
   <div class="ln"><div class="lbl">LOVE SCORE</div><div class="score" id="score">1%</div></div>
   <div id="track" class="ln" role="slider" tabindex="0" aria-label="Love score" aria-valuemin="1" aria-valuemax="500000" aria-valuenow="1"><div id="fill"></div><div id="knob">♥</div></div>
+  <p class="sub ln" id="effort">&nbsp;</p>
   <div class="row ln"><button class="btn sec nudge" id="dn" aria-label="Decrease">−</button><button class="btn" id="sendLove">SEND MY LOVE</button><button class="btn sec nudge" id="up" aria-label="Increase">+</button></div>
 </div></div></section>
 
@@ -180,12 +205,9 @@ let db = null;
 try { db = getDatabase(initializeApp(firebaseConfig)); } catch (e) { console.error(e); }
 
 /* ===================================================== EDITABLE CONTENT ===================================================== */
-// Opening message (kept exactly as written; Bengali part and English part are split into two lines).
-const OPENING_BN = "তোমার মতো হাজারটা মানুষ থাকলেও, আমার পছন্দের তালিকায় শুধু তুমিই থাকবে!";
-const OPENING_EN = "I like only you, always you.!! ❤️ 🐣 🕊️";
-const BN_LINES = ["তোমাকে ভালোবাসি!","অসম্ভব ভালোবাসি!","অনেক ভালোবাসি!","প্রচুর ভালোবাসি!","পাগলের মতো ভালোবাসি!","নিজের থেকেও বেশি ভালোবাসি।"];
-// >>> REPLACE these with your own Banglish lines (the text you wanted shown on screen 05). <<<
-const BANGLISH_LINES = ["Tumi amar shob kichur moddhe shobcheye alada.","Tomar hashi dekhlei amar poro din shundor hoye jay.","Ei list-e shudhu tomar naam-i thakbe."];
+// All story text is Banglish (edit freely).
+const OPENING_TEXT = "Tomar moto hajarta manush thakleo, amar pochonder talikay shudhu tumi-i thakbe! - I like only you, always you.!! ❤️ 🐣 🕊️";
+const LOVE_LINES = ["Tomake bhalobashi!", "Osombhob bhalobashi!", "Onek bhalobashi!", "Prochur bhalobashi!", "Pagoler moto bhalobashi!", "Nijer theke-o beshi bhalobashi."];
 
 /* ===================================================== UTILITIES ===================================================== */
 const $ = s => document.querySelector(s);
@@ -227,12 +249,12 @@ const cv = $("#fx"), cx = cv.getContext("2d");
 let W = 0, H = 0, DPR = 1, px = 0, py = 0, tx = 0, ty = 0;
 function resizeFx() { DPR = Math.min(devicePixelRatio || 1, 2); W = innerWidth; H = innerHeight; cv.width = W * DPR; cv.height = H * DPR; cx.setTransform(DPR, 0, 0, DPR, 0, 0); }
 addEventListener("resize", resizeFx); resizeFx();
-addEventListener("pointermove", e => { tx = e.clientX / W - .5; ty = e.clientY / H - .5; });
+addEventListener("pointermove", e => { tx = e.clientX / W - .5; ty = e.clientY / H - .5; const r = document.documentElement.style; r.setProperty("--rx", tx.toFixed(3)); r.setProperty("--ry", ty.toFixed(3)); });
 // target particle counts per scene
 const MODES = {
   day:   { cloud: 5, petal: 14, spark: 16, glyph: 3, rain: 0,   heart: 0 },
-  night: { cloud: 2, petal: 0,  spark: 10, glyph: 0, rain: 110, heart: 9 },
-  final: { cloud: 4, petal: 22, spark: 24, glyph: 5, rain: 26,  heart: 12 }
+  night: { cloud: 2, petal: 0,  spark: 10, glyph: 0, rain: 110, heart: 9, fly: 16, shoot: 1 },
+  final: { cloud: 4, petal: 22, spark: 24, glyph: 5, rain: 26,  heart: 16, fly: 8 }
 };
 let target = MODES.day; const parts = []; const K = RM ? .35 : 1; const GLYPHS = ["🌸", "🍪", "🐱", "🌼"];
 const rnd = (a, b) => a + Math.random() * (b - a);
@@ -242,6 +264,8 @@ function make(type, fresh) {
   if (type === "cloud") { p.y = rnd(.02, .55) * H; p.x = fresh ? rnd(-100, W) : -260; p.w = rnd(180, 360) * z; p.vx = rnd(5, 12) * z; }
   if (type === "petal") { p.vx = rnd(-8, 14); p.vy = rnd(18, 40) * z; p.col = ["#e9cfae", "#f6ead9", "#c4975f", "#a9b88a"][Math.floor(rnd(0, 4))]; }
   if (type === "spark") { p.y = rnd(0, H); p.vx = 0; p.vy = rnd(-3, 3); }
+  if (type === "fly") { p.y = rnd(0, H); p.vx = 0; p.vy = 0; }
+  if (type === "shoot") { p.x = rnd(W * .4, W); p.y = rnd(0, H * .35); p.vx = -rnd(520, 760); p.vy = rnd(260, 380); p.age = -rnd(2, 6); }
   if (type === "glyph") { p.vx = rnd(-6, 8); p.vy = rnd(14, 28); p.g = GLYPHS[Math.floor(rnd(0, 4))]; }
   if (type === "rain") { p.vx = -60 * z; p.vy = rnd(520, 760) * z; p.l = rnd(10, 22) * z; }
   if (type === "heart") { p.y = fresh ? rnd(0, H) : H + 20; p.vx = rnd(-6, 6); p.vy = -rnd(14, 30) * z; }
@@ -268,7 +292,7 @@ function frame(now) {
     if (p.vx) p.x += p.vx * dt; if (p.vy) p.y += p.vy * dt;
     if (p.type === "petal" || p.type === "glyph") p.x += Math.sin(p.ph * .9) * 14 * dt;
     let out = p.y > H + 40 || p.y < -60 || p.x > W + 400 || p.x < -420;
-    if (out) { if (have > want) { parts.splice(i, 1); continue; } Object.assign(p, make(p.type, false), { age: 0 }); continue; }
+    if (out) { if (have > want) { parts.splice(i, 1); continue; } Object.assign(p, make(p.type, false), { age: p.type === "shoot" ? -rnd(4, 10) : 0 }); continue; }
     if (have > want + 2 && Math.random() < .004) { parts.splice(i, 1); continue; } // thin out when scene changes
     cx.save(); cx.translate(p.x + ox, p.y + oy);
     const night = document.body.classList.contains("night");
@@ -286,6 +310,13 @@ function frame(now) {
       cx.rotate(Math.sin(p.ph) * .3); cx.globalAlpha = .55 * fade * p.z; cx.font = 20 * p.z + "px serif"; cx.textAlign = "center"; cx.fillText(p.g, 0, 0);
     } else if (p.type === "rain") {
       cx.globalAlpha = .4 * fade * p.z; cx.strokeStyle = "#bcd4ee"; cx.lineWidth = 1; cx.beginPath(); cx.moveTo(0, 0); cx.lineTo(p.vx * .02, p.l); cx.stroke();
+    } else if (p.type === "fly") { // fireflies
+      p.x += Math.sin(p.ph * .7) * 12 * dt; p.y += Math.cos(p.ph * .5) * 9 * dt;
+      const a = (Math.sin(p.ph * 1.3) + 1) / 2 * fade, g = cx.createRadialGradient(0, 0, 0, 0, 0, 9 * p.z);
+      g.addColorStop(0, "rgba(255,236,190," + .9 * a + ")"); g.addColorStop(1, "rgba(255,236,190,0)"); cx.fillStyle = g; cx.beginPath(); cx.arc(0, 0, 9 * p.z, 0, 6.3); cx.fill();
+    } else if (p.type === "shoot") { // shooting star
+      const g = cx.createLinearGradient(0, 0, -p.vx * .14, -p.vy * .14); g.addColorStop(0, "rgba(255,255,255,.9)"); g.addColorStop(1, "rgba(255,255,255,0)");
+      cx.strokeStyle = g; cx.lineWidth = 2; cx.beginPath(); cx.moveTo(0, 0); cx.lineTo(-p.vx * .14, -p.vy * .14); cx.stroke();
     } else if (p.type === "heart") {
       cx.globalAlpha = .5 * fade * p.z; cx.fillStyle = night ? "#f3c9cf" : "#d9a79a"; cx.font = 16 * p.z * p.s + "px serif"; cx.textAlign = "center"; cx.fillText("♥", 0, 0);
     }
@@ -295,6 +326,18 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 
+/* click burst: small hearts and sparkles */
+function burst(x, y, n = 10) {
+  if (RM) n = 4;
+  for (let i = 0; i < n; i++) {
+    const e = document.createElement("i"), a = rnd(0, 6.28), d = rnd(40, 110);
+    e.className = "bh"; e.textContent = Math.random() < .7 ? "♥" : "✦";
+    e.style.cssText = `left:${x}px;top:${y}px;--dx:${Math.cos(a) * d}px;--dy:${Math.sin(a) * d - 30}px;color:${["#c4975f", "#8fb6d6", "#e7b9b0", "#8a9a6b"][i % 4]};font-size:${rnd(12, 22)}px;font-style:normal`;
+    document.body.appendChild(e); e.addEventListener("animationend", () => e.remove());
+  }
+}
+document.addEventListener("click", e => { const b = e.target.closest(".btn"); if (!b) return; const r = b.getBoundingClientRect(); burst(e.clientX || r.left + r.width / 2, e.clientY || r.top + r.height / 2); });
+
 /* ===================================================== SCREEN MANAGEMENT ===================================================== */
 // scene (sky + particles) is set first, then the screen content fades in ~0.9s later: environment → text → interaction
 const SCENES = { s1: "day", s2: "night", s3: "day", s4: "day", s5: "night", s6: "day", s7: "day", s8: "final" };
@@ -303,34 +346,34 @@ const hooks = {};
 function go(id) {
   tok++; const prev = current; current = id;
   document.querySelectorAll(".screen.active:not(#admin)").forEach(s => s.classList.remove("active"));
-  const sc = SCENES[id]; document.body.classList.toggle("night", sc === "night"); setScene(sc);
+  const sc = SCENES[id]; document.body.classList.toggle("night", sc === "night"); document.body.classList.toggle("final", sc === "final"); setScene(sc);
   const t = tok; setTimeout(() => { if (t !== tok) return; $("#" + id).classList.add("active"); hooks[id] && hooks[id](); }, prev ? 900 : 200);
 }
 function showCard(id) { const el = $("#" + id); unreveal(el); reveal(el, .5, .3); }
 
 hooks.s1 = () => {
   const m = $("#msg"); m.innerHTML = ""; unreveal(m);
-  // environment plays alone first, then the message appears slowly
-  later(2200, () => {
-    m.innerHTML = `<span style="display:block">${OPENING_BN.split(" ").map(w => `<span class="ln w">${esc(w)}</span>`).join("")}</span><span class="ln" style="display:block;margin-top:14px;font-family:Inter,sans-serif;font-size:.85em;color:var(--cara-d)">${esc(OPENING_EN)}</span>`;
-    const total = reveal(m, .16, 0);
-    later(total + 400, () => $("#c1").classList.remove("hide"));
+  // the environment plays alone first, then the message appears slowly
+  later(2600, () => {
+    words(m, OPENING_TEXT);
+    const total = reveal(m, .17, 0);
+    later(total + 500, () => $("#c1").classList.remove("hide"));
   });
 };
-hooks.s2 = () => { const el = $("#bnLines"); lines(el, BN_LINES); unreveal(el); later(900, () => { const t = reveal(el, 1.5, 0); later(t + 1800, () => go("s3")); }); };
 hooks.s3 = () => { $("#q1").classList.remove("no"); showCard("q1"); };
-hooks.s4 = () => { sizeSig(); clearSig(); const c = $("#s4 .card"); unreveal(c); reveal(c, .5, .2); };
-hooks.s5 = () => { const el = $("#blLines"); lines(el, BANGLISH_LINES); unreveal(el); $("#c5").classList.add("hide"); later(900, () => { const t = reveal(el, 1.8, 0); later(t + 600, () => $("#c5").classList.remove("hide")); }); };
+hooks.s4 = () => { const c = $("#s4 .card"); c.classList.remove("no"); sizeSig(); clearSig(); unreveal(c); reveal(c, .5, .2); };
+hooks.s5 = () => { const el = $("#blLines"); lines(el, LOVE_LINES); unreveal(el); $("#c5").classList.add("hide"); later(900, () => { const t = reveal(el, 1.8, 0); later(t + 600, () => $("#c5").classList.remove("hide")); }); };
 hooks.s6 = () => { $("#q2").classList.remove("no"); showCard("q2"); };
-hooks.s7 = () => { const c = $("#s7 .card"); unreveal(c); reveal(c, .45, .2); setT(0, true); };
+hooks.s7 = () => { const c = $("#s7 .card"); unreveal(c); reveal(c, .45, .2); tPos = goal = 0; render(); };
 hooks.s8 = () => {
   const w = $("#s8 .wrap"); unreveal(w); reveal(w, .9, .3);
+  for (let i = 0; i < 7; i++) later(900 + i * 800, () => burst(rnd(W * .2, W * .8), rnd(H * .18, H * .5), 14));
   countTo($("#fscore"), 0, state.percent || 1, 2800);
   const ok = !!state.signature;
   $("#sigState").innerHTML = (ok ? `<img class="final-sig" alt="Your signature" src="${state.signature}">` : "") + `<span class="sub">${ok ? "✓ Signature received" : "Signature not provided"}</span>`;
 };
 
-$("#c1").onclick = () => go("s2");
+$("#c1").onclick = () => go("s3"); $("#c4").onclick = () => go("s5");
 $("#c5").onclick = () => go("s6");
 $("#y1").onclick = () => { state.listAnswer = "yes"; save({ permanentListAnswer: "yes" }); go("s4"); };
 $("#n1").onclick = () => { state.listAnswer = "no"; save({ permanentListAnswer: "no" }); $("#q1").classList.add("no"); };
@@ -365,36 +408,46 @@ $("#sub").onclick = async () => {
   state.signature = o.toDataURL("image/png");
   const b = $("#sub"); b.disabled = true; b.textContent = "SAVING…";
   await save({ signature: state.signature }, true);
-  b.disabled = false; b.textContent = "SUBMIT SIGNATURE"; go("s5");
+  b.disabled = false; b.textContent = "SUBMIT SIGNATURE"; $("#sigPrev").src = state.signature; $("#s4 .card").classList.add("no");
 };
 
 /* ===================================================== LOVE PERCENTAGE ===================================================== */
-// Logarithmic mapping so both 1% and 500,000% are reachable on one slider.
-const MAX = 500000, LOGMAX = Math.log(MAX), track = $("#track"), knob = $("#knob"), fill = $("#fill");
-let tPos = 0, val = 1, shown = 1, anim = false;
-const tToV = t => Math.max(1, Math.min(MAX, Math.round(Math.exp(t * LOGMAX))));
-[[1, "1%"], [100, "100"], [1000, "1K"], [10000, "10K"], [100000, "100K"], [500000, "500K"]].forEach(([v, l]) => {
-  const s = document.createElement("span"); s.className = "tick"; s.style.left = Math.log(v) / LOGMAX * 100 + "%"; s.textContent = l; track.appendChild(s);
+// Deliberately hard: the knob is "heavy". It chases your finger at a limited speed that drops as the score grows,
+// and the mouse wheel / arrow keys only nudge it a little. Reaching 500,000% takes a long, steady pull.
+// Every value from 1 to 500,000 is still reachable (the +/- buttons give exact fine-tuning).
+const MAX = 500000, track = $("#track"), knob = $("#knob"), fill = $("#fill");
+let tPos = 0, goal = 0, val = 1, dragging = false, running = false;
+const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+const tToV = t => clamp(Math.round(t * MAX), 1, MAX);
+[[1, "1%"], [100000, "100K"], [250000, "250K"], [500000, "500K"]].forEach(([v, l]) => {
+  const s = document.createElement("span"); s.className = "tick"; s.style.left = v / MAX * 100 + "%"; s.textContent = l; track.appendChild(s);
 });
-function setT(t, snap) {
-  tPos = Math.max(0, Math.min(1, t)); val = tToV(tPos);
-  knob.style.left = fill.style.width = tPos * 100 + "%"; track.setAttribute("aria-valuenow", val);
-  if (snap) { shown = val; $("#score").textContent = fmt(val); } else if (!anim) { anim = true; requestAnimationFrame(tick); }
+const EFFORT = [[.02, "Pull slowly… love this big is heavy."], [.1, "That's it, keep pulling 💪"], [.3, "Don't stop now…"], [.6, "Heavy, isn't it? That's how much it is 🤍"], [.9, "Almost there… I can feel it."], [.999, "So close."], [2, "That's everything. 🥹"]];
+function render() {
+  knob.style.left = fill.style.width = tPos * 100 + "%"; val = tToV(tPos);
+  $("#score").textContent = fmt(val); track.setAttribute("aria-valuenow", val);
+  const m = EFFORT.find(e => tPos < e[0])[1]; if ($("#effort").textContent !== m) $("#effort").textContent = m;
 }
-function tick() { // smooth animated counter
-  shown += (val - shown) * .2; if (Math.abs(val - shown) < .5) { shown = val; anim = false; }
-  $("#score").textContent = fmt(Math.round(shown)); if (anim) requestAnimationFrame(tick);
+function run() { // the knob moves toward the goal at a limited, slowing speed
+  if (running) return; running = true; let t0 = performance.now();
+  (function f(n) {
+    const dt = Math.min((n - t0) / 1000, .05); t0 = n;
+    const d = goal - tPos, sp = (.045 - .025 * tPos) * dt; // ~4.5%/s at the start, ~2%/s near the end
+    tPos += Math.sign(d) * Math.min(Math.abs(d), sp); render();
+    if (dragging || Math.abs(goal - tPos) > 1e-6) requestAnimationFrame(f); else running = false;
+  })(t0);
 }
-const fromX = x => { const r = track.getBoundingClientRect(); setT((x - r.left) / r.width); };
-track.addEventListener("pointerdown", e => { track.setPointerCapture(e.pointerId); track.classList.add("drag"); track.focus(); fromX(e.clientX); });
-track.addEventListener("pointermove", e => { if (track.classList.contains("drag")) fromX(e.clientX); });
-["pointerup", "pointercancel"].forEach(n => track.addEventListener(n, () => track.classList.remove("drag")));
+const aim = g => { goal = clamp(g, tPos - .03, tPos + .03); run(); }; // wheel/keys can only run slightly ahead
+const fromX = x => { const r = track.getBoundingClientRect(); return clamp((x - r.left) / r.width); };
+track.addEventListener("pointerdown", e => { track.setPointerCapture(e.pointerId); track.classList.add("drag"); track.focus(); dragging = true; goal = fromX(e.clientX); run(); });
+track.addEventListener("pointermove", e => { if (dragging) goal = fromX(e.clientX); });
+["pointerup", "pointercancel"].forEach(n => track.addEventListener(n, () => { dragging = false; goal = tPos; track.classList.remove("drag"); }));
+$("#s7 .card").addEventListener("wheel", e => { e.preventDefault(); aim(goal + e.deltaY * (e.deltaMode === 1 ? 33 : 1) * .00004); }, { passive: false });
 track.addEventListener("keydown", e => {
-  const f = e.shiftKey ? .0005 : .004, m = { ArrowRight: f, ArrowUp: f, ArrowLeft: -f, ArrowDown: -f, PageUp: .05, PageDown: -.05 };
-  if (e.key in m) { e.preventDefault(); setT(tPos + m[e.key]); } else if (e.key === "Home") setT(0); else if (e.key === "End") setT(1);
+  const f = e.shiftKey ? .0001 : .001, m = { ArrowRight: f, ArrowUp: f, ArrowLeft: -f, ArrowDown: -f };
+  if (e.key in m) { e.preventDefault(); aim(goal + m[e.key]); }
 });
-// +/- buttons: exact fine-tuning (about 1% of the current value, minimum 1)
-const nudge = d => { const n = Math.max(1, Math.round(val * .01)); setT(Math.log(Math.max(1, Math.min(MAX, val + d * n))) / LOGMAX); };
+const nudge = d => { tPos = goal = clamp((val + d) / MAX); render(); }; // exact +1 / -1
 $("#up").onclick = () => nudge(1); $("#dn").onclick = () => nudge(-1);
 $("#sendLove").onclick = async () => {
   const b = $("#sendLove"); b.disabled = true; state.percent = val;
